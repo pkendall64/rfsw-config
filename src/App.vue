@@ -1,63 +1,32 @@
-<script setup>
-import { ref, computed, watch } from 'vue'
-import { chipProfiles, getChipProfile } from './chips/types.js'
+<!--
+  SPDX-License-Identifier: GPL-3.0-or-later
+  Copyright (C) 2025 contributors to rfsw-config
+-->
 
-const MODE_ROWS = [
-  { key: 'standby', label: 'Standby' },
-  { key: 'rx900', label: 'SubG Receive' },
-  { key: 'tx900', label: 'SubG Transmit' },
-  { key: 'tx900hp', label: 'SubG Transmit High Power' },
-  { key: 'tx24', label: '2.4G Transmit' },
-  { key: 'rx24', label: '2.4G Receive' },
-]
+<script setup>
+import { ref, computed } from 'vue'
+import { chipProfiles, getChipProfile } from './chips/types.js'
+import Lr1121Panel from './components/Lr1121Panel.vue'
+import Lr2021Panel from './components/Lr2021Panel.vue'
 
 const selectedChipId = ref('lr1121')
 const profile = computed(() => getChipProfile(selectedChipId.value))
 
-const rowLevels = ref({
-  standby: [0, 0, 0, 0, 0],
-  rx900: [0, 1, 0, 0, 0],
-  tx900: [0, 0, 0, 1, 0],
-  tx900hp: [0, 0, 0, 1, 0],
-  tx24: [0, 0, 1, 0, 0],
-  rx24: [1, 0, 0, 0, 0],
-})
-
-function loadElrsDefaults() {
-  const p = getChipProfile('lr1121')
-  const st = p.decode([...p.elrsDefaultBytes])
-  rowLevels.value = {
-    standby: [...st.rows.standby],
-    rx900: [...st.rows.rx900],
-    tx900: [...st.rows.tx900],
-    tx900hp: [...st.rows.tx900hp],
-    tx24: [...st.rows.tx24],
-    rx24: [...st.rows.rx24],
-  }
+const panelMap = {
+  lr1121: Lr1121Panel,
+  lr2021: Lr2021Panel,
 }
 
-loadElrsDefaults()
+const panelComponent = computed(() => panelMap[selectedChipId.value] ?? Lr1121Panel)
 
-watch(selectedChipId, (id) => {
-  if (id === 'lr1121') loadElrsDefaults()
-})
+const bytes = ref([])
 
-const bytes = computed(() => {
-  if (profile.value.comingSoon) return []
-  return profile.value.encode({
-    rows: {
-      standby: rowLevels.value.standby,
-      rx900: rowLevels.value.rx900,
-      tx900: rowLevels.value.tx900,
-      tx900hp: rowLevels.value.tx900hp,
-      tx24: rowLevels.value.tx24,
-      rx24: rowLevels.value.rx24,
-    },
-  })
-})
+function onBytesUpdate(b) {
+  bytes.value = b
+}
 
 const validationWarnings = computed(() => {
-  if (profile.value.comingSoon || !profile.value.validate) return []
+  if (!profile.value.validate || !bytes.value.length) return []
   return profile.value.validate(bytes.value)
 })
 
@@ -67,7 +36,20 @@ const jsonLine = computed(() => {
   return `"radio_rfsw_ctrl": [ ${b.join(', ')} ],`
 })
 
+const matchesFirmwareDefault = computed(() => {
+  const b = bytes.value
+  const def = profile.value.elrsDefaultBytes
+  if (!b.length || b.length !== def.length) return false
+  return b.every((v, i) => v === def[i])
+})
+
 const copyFeedback = ref(false)
+
+const chipPanelRef = ref(null)
+
+function resetToFirmwareDefaults() {
+  chipPanelRef.value?.loadElrsDefaults?.()
+}
 
 async function copyJsonLine() {
   try {
@@ -76,16 +58,6 @@ async function copyJsonLine() {
   } catch {
     copyFeedback.value = false
   }
-}
-
-function toggleLevel(rowKey, dioIndex) {
-  const row = rowLevels.value[rowKey]
-  row[dioIndex] = row[dioIndex] ? 0 : 1
-}
-
-/** @param {0|1} bit */
-function levelLabel(bit) {
-  return bit ? 'HIGH' : 'LOW'
 }
 </script>
 
@@ -114,101 +86,69 @@ function levelLabel(bit) {
           </v-col>
         </v-row>
 
-        <v-alert v-if="profile.comingSoon" type="info" variant="tonal" class="mb-6" border="start">
-          <strong>{{ profile.label }}</strong> layout is not defined in ExpressLRS yet. LR1121 is fully
-          supported below.
+        <v-alert
+          v-for="(w, i) in validationWarnings"
+          :key="i"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-2"
+          border="start"
+        >
+          {{ w }}
         </v-alert>
 
-        <template v-if="!profile.comingSoon">
-          <v-alert
-            v-for="(w, i) in validationWarnings"
-            :key="i"
-            type="warning"
-            variant="tonal"
-            density="compact"
-            class="mb-2"
-            border="start"
-          >
-            {{ w }}
-          </v-alert>
+        <component
+          ref="chipPanelRef"
+          :is="panelComponent"
+          :key="selectedChipId"
+          @update:bytes="onBytesUpdate"
+        />
 
-          <v-card class="mb-6" variant="outlined">
-            <v-card-title class="text-subtitle-1">Truth table</v-card-title>
-            <v-card-subtitle class="text-wrap pb-2">
-              Each cell is <strong>LOW</strong> or <strong>HIGH</strong> (click to toggle).
-            </v-card-subtitle>
-            <v-card-subtitle class="text-wrap pb-2 text-body-2 text-medium-emphasis mb-6">
-              Derive the eight-byte <code>radio_rfsw_ctrl</code> array for unified hardware
-              <code>hardware.json</code> from your schematic truth table. Each byte packs DIO levels with
-              <strong>bit 0 = DIO5</strong> through <strong>bit 4 = DIO10</strong> (DIO9 is used as the interrupt pin).
-            </v-card-subtitle>
-            <v-card-text class="pa-0">
-              <v-table density="compact" class="rfsw-table">
-                <thead>
-                  <tr>
-                    <th class="text-left" style="min-width: 9rem">Mode</th>
-                    <th v-for="d in profile.dioLabels" :key="d" class="text-center text-caption">
-                      {{ d }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="mr in MODE_ROWS" :key="mr.key">
-                    <td>{{ mr.label }}</td>
-                    <td v-for="dioIndex in 5" :key="mr.key + '-' + dioIndex" class="text-center dio-cell">
-                      <v-chip
-                        :color="rowLevels[mr.key][dioIndex - 1] ? 'primary' : undefined"
-                        :variant="rowLevels[mr.key][dioIndex - 1] ? 'flat' : 'outlined'"
-                        size="small"
-                        class="dio-bit px-3 font-weight-medium"
-                        role="button"
-                        tabindex="0"
-                        :aria-label="`${mr.label}, ${profile.dioLabels[dioIndex - 1]}, ${levelLabel(rowLevels[mr.key][dioIndex - 1])}`"
-                        @click="toggleLevel(mr.key, dioIndex - 1)"
-                        @keydown.enter.prevent="toggleLevel(mr.key, dioIndex - 1)"
-                        @keydown.space.prevent="toggleLevel(mr.key, dioIndex - 1)"
-                      >
-                        {{ levelLabel(rowLevels[mr.key][dioIndex - 1]) }}
-                      </v-chip>
-                    </td>
-                  </tr>
-                </tbody>
-              </v-table>
-            </v-card-text>
-          </v-card>
-
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-card variant="outlined">
-                <v-card-title class="text-subtitle-1">Live output</v-card-title>
-                <v-card-text>
-                  <div class="text-caption text-medium-emphasis mb-1">Decimal (JSON)</div>
-                  <pre class="text-body-2 mb-4 overflow-x-auto">[ {{ bytes.join(', ') }} ]</pre>
-                  <div class="d-flex flex-wrap ga-2">
-                    <v-btn color="primary" @click="copyJsonLine">Copy line</v-btn>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-card variant="outlined" color="surface-variant">
-                <v-card-title class="text-subtitle-1">ELRS firmware default (reference)</v-card-title>
-                <v-card-text>
-                  <p class="text-body-2 mb-3">
-                    Values from <code>LR1121::SetDioAsRfSwitch</code> when
-                    <code>LR1121_RFSW_CTRL_COUNT != 8</code>. They target a <strong>4-DIO</strong> pattern
-                    (<code>RfswEnable</code> <code>0x0F</code>) and may not match boards that use five DIOs
-                    (DIO5–8 + DIO10).
-                  </p>
-                  <pre class="text-body-2 overflow-x-auto mb-2">[ {{ [...profile.elrsDefaultBytes].join(', ') }} ]</pre>
-                  <v-btn class="mt-4" size="small" variant="text" @click="loadElrsDefaults">
-                    Reset form to this preset
-                  </v-btn>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </template>
+        <v-row class="mt-6" align="stretch">
+          <v-col cols="12" md="6">
+            <v-card variant="outlined" class="fill-height">
+              <v-card-title class="text-subtitle-1 d-flex align-center flex-wrap ga-2">
+                Live output
+                <v-chip
+                  v-if="bytes.length"
+                  size="small"
+                  :color="matchesFirmwareDefault ? 'success' : 'warning'"
+                  variant="tonal"
+                >
+                  {{ matchesFirmwareDefault ? 'Default' : 'Custom' }}
+                </v-chip>
+              </v-card-title>
+              <v-card-text>
+                <div class="text-caption text-medium-emphasis mb-1">Decimal (JSON)</div>
+                <pre class="text-body-2 mb-4 overflow-x-auto">[ {{ bytes.join(', ') }} ]</pre>
+                <div class="d-flex flex-wrap ga-2">
+                  <v-btn color="primary" @click="copyJsonLine">Copy line</v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-card variant="outlined" class="fill-height">
+              <v-card-title class="text-subtitle-1">Firmware defaults</v-card-title>
+              <v-card-text>
+                <p class="text-body-2 mb-3">
+                  These values are used if no <code>radio_rfsw_ctrl</code> entry is present in
+                  <code>hardware.json</code>.
+                </p>
+                <pre class="text-body-2 overflow-x-auto mb-2">[ {{ [...profile.elrsDefaultBytes].join(', ') }} ]</pre>
+                <v-btn
+                  class="mt-2"
+                  color="primary"
+                  variant="outlined"
+                  @click="resetToFirmwareDefaults"
+                >
+                  Reset to Defaults
+                </v-btn>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
       </v-container>
     </v-main>
 
@@ -217,27 +157,3 @@ function levelLabel(bit) {
     </v-snackbar>
   </v-app>
 </template>
-
-<style scoped>
-.rfsw-table :deep(th),
-.rfsw-table :deep(td) {
-  vertical-align: middle;
-}
-
-.dio-cell {
-  padding-top: 6px !important;
-  padding-bottom: 6px !important;
-}
-
-.dio-bit {
-  min-width: 3.75rem;
-  justify-content: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.dio-bit:focus-visible {
-  outline: 2px solid rgb(var(--v-theme-primary));
-  outline-offset: 2px;
-}
-</style>

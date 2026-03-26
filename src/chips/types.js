@@ -1,15 +1,14 @@
 /**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2025 contributors to rfsw-config
+ */
+
+/**
  * Chip profile registry for RF switch calculators.
- * LR1121 is fully implemented; LR2021 is a stub until ELRS defines bytes.
  */
 
 import { lr1121Profile } from './lr1121.js'
-
-const lr2021Profile = Object.freeze({
-  id: 'lr2021',
-  label: 'LR2021 (coming soon)',
-  comingSoon: true,
-})
+import { lr2021Profile } from './lr2021.js'
 
 export const chipProfiles = Object.freeze([lr1121Profile, lr2021Profile])
 

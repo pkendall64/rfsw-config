@@ -1,4 +1,9 @@
 /**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2025 contributors to rfsw-config
+ */
+
+/**
  * LR1121 `radio_rfsw_ctrl`: 8 bytes, DIO5–DIO8 + DIO10 (LSB = DIO5, bit 4 = DIO10).
  * @see ExpressLRS LR1121Driver::SetDioAsRfSwitch
  */

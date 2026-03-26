@@ -1,3 +1,8 @@
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2025 contributors to rfsw-config
+ */
+
 import { describe, it, expect } from 'vitest'
 import {
   LR1121_ELRS_DEFAULT_BYTES,
