@@ -78,7 +78,10 @@ defineExpose({ loadElrsDefaults })
 <template>
   <div>
     <v-card variant="outlined">
-      <v-card-title class="text-subtitle-1">Truth table</v-card-title>
+      <v-card-title class="text-subtitle-1 d-flex align-center ga-2">
+        <v-icon icon="mdi-table-large" size="small" class="text-medium-emphasis" />
+        Truth table
+      </v-card-title>
       <v-card-subtitle class="text-wrap pb-2">
         Each cell is <strong>LOW</strong> or <strong>HIGH</strong> (click to toggle).
       </v-card-subtitle>
@@ -91,9 +94,17 @@ defineExpose({ loadElrsDefaults })
         <v-table density="compact" class="rfsw-table">
           <thead>
             <tr>
-              <th class="text-left" style="min-width: 9rem">Mode</th>
+              <th class="text-left" style="min-width: 9rem">
+                <span class="d-inline-flex align-center ga-2">
+                  <v-icon icon="mdi-antenna" size="small" class="text-medium-emphasis" />
+                  RF State
+                </span>
+              </th>
               <th v-for="d in dioLabels" :key="d" class="text-center text-caption">
-                {{ d }}
+                <span class="d-inline-flex align-center justify-center ga-1 flex-wrap">
+                  <v-icon icon="mdi-square-wave" size="x-small" class="text-medium-emphasis" />
+                  {{ d }}
+                </span>
               </th>
             </tr>
           </thead>

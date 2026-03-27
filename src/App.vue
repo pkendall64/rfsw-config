@@ -64,6 +64,9 @@ async function copyJsonLine() {
 <template>
   <v-app>
     <v-app-bar color="primary" density="comfortable">
+      <template #prepend>
+        <v-icon icon="mdi-chip" class="ms-2" />
+      </template>
       <v-app-bar-title class="text-h6 font-weight-regular">
         ExpressLRS <code class="text-body-2">radio_rfsw_ctrl</code> calculator
       </v-app-bar-title>
@@ -79,6 +82,7 @@ async function copyJsonLine() {
               item-title="label"
               item-value="id"
               label="Chip profile"
+              prepend-inner-icon="mdi-memory"
               variant="outlined"
               density="comfortable"
               hide-details
@@ -94,6 +98,7 @@ async function copyJsonLine() {
           density="compact"
           class="mb-2"
           border="start"
+          icon="mdi-alert-outline"
         >
           {{ w }}
         </v-alert>
@@ -109,12 +114,14 @@ async function copyJsonLine() {
           <v-col cols="12" md="6">
             <v-card variant="outlined" class="fill-height">
               <v-card-title class="text-subtitle-1 d-flex align-center flex-wrap ga-2">
+                <v-icon icon="mdi-code-braces" size="small" class="text-medium-emphasis" />
                 Live output
                 <v-chip
                   v-if="bytes.length"
                   size="small"
                   :color="matchesFirmwareDefault ? 'success' : 'warning'"
                   variant="tonal"
+                  :prepend-icon="matchesFirmwareDefault ? 'mdi-check-decagram' : 'mdi-tune-variant'"
                 >
                   {{ matchesFirmwareDefault ? 'Default' : 'Custom' }}
                 </v-chip>
@@ -123,14 +130,19 @@ async function copyJsonLine() {
                 <div class="text-caption text-medium-emphasis mb-1">Decimal (JSON)</div>
                 <pre class="text-body-2 mb-4 overflow-x-auto">[ {{ bytes.join(', ') }} ]</pre>
                 <div class="d-flex flex-wrap ga-2">
-                  <v-btn color="primary" @click="copyJsonLine">Copy line</v-btn>
+                  <v-btn color="primary" prepend-icon="mdi-content-copy" @click="copyJsonLine">
+                    Copy line
+                  </v-btn>
                 </div>
               </v-card-text>
             </v-card>
           </v-col>
           <v-col cols="12" md="6">
             <v-card variant="outlined" class="fill-height">
-              <v-card-title class="text-subtitle-1">Firmware defaults</v-card-title>
+              <v-card-title class="text-subtitle-1 d-flex align-center ga-2">
+                <v-icon icon="mdi-file-cog-outline" size="small" class="text-medium-emphasis" />
+                Firmware defaults
+              </v-card-title>
               <v-card-text>
                 <p class="text-body-2 mb-3">
                   These values are used if no <code>radio_rfsw_ctrl</code> entry is present in
@@ -141,6 +153,7 @@ async function copyJsonLine() {
                   class="mt-2"
                   color="primary"
                   variant="outlined"
+                  prepend-icon="mdi-backup-restore"
                   @click="resetToFirmwareDefaults"
                 >
                   Reset to Defaults
@@ -153,7 +166,10 @@ async function copyJsonLine() {
     </v-main>
 
     <v-snackbar v-model="copyFeedback" :timeout="2000" location="bottom">
-      Copied to clipboard
+      <div class="d-flex align-center ga-2">
+        <v-icon icon="mdi-check-circle" />
+        Copied to clipboard
+      </div>
     </v-snackbar>
   </v-app>
 </template>

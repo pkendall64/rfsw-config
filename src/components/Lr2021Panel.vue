@@ -93,6 +93,7 @@ defineExpose({ loadElrsDefaults })
           item-title="title"
           item-value="value"
           label="Interrupt pin"
+          prepend-inner-icon="mdi-bell-ring-outline"
           variant="outlined"
           density="comfortable"
           hide-details
@@ -101,7 +102,10 @@ defineExpose({ loadElrsDefaults })
     </v-row>
 
     <v-card variant="outlined">
-      <v-card-title class="text-subtitle-1">Truth table</v-card-title>
+      <v-card-title class="text-subtitle-1 d-flex align-center ga-2">
+        <v-icon icon="mdi-table-large" size="small" class="text-medium-emphasis" />
+        Truth table
+      </v-card-title>
       <v-card-subtitle class="text-wrap pb-2">
         Each cell is <strong>LOW</strong> or <strong>HIGH</strong> for that RF state and DIO (click to toggle).
         Interrupt column is not used for RF switching.
@@ -115,9 +119,17 @@ defineExpose({ loadElrsDefaults })
         <v-table density="compact" class="rfsw-table">
           <thead>
             <tr>
-              <th class="text-left" style="min-width: 9rem">RF state (mask bit)</th>
-              <th v-for="(d, di) in LR2021_DIO_LABELS" :key="d" class="text-center text-caption">
-                {{ d }}
+              <th class="text-left" style="min-width: 9rem">
+                <span class="d-inline-flex align-center ga-2">
+                  <v-icon icon="mdi-antenna" size="small" class="text-medium-emphasis" />
+                  RF State
+                </span>
+              </th>
+              <th v-for="d in LR2021_DIO_LABELS" :key="d" class="text-center text-caption">
+                <span class="d-inline-flex align-center justify-center ga-1 flex-wrap">
+                  <v-icon icon="mdi-square-wave" size="x-small" class="text-medium-emphasis" />
+                  {{ d }}
+                </span>
               </th>
             </tr>
           </thead>
