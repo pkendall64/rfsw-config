@@ -92,7 +92,7 @@ defineExpose({ loadElrsDefaults })
           :items="interruptItems"
           item-title="title"
           item-value="value"
-          label="Interrupt pin (0xFF in array)"
+          label="Interrupt pin"
           variant="outlined"
           density="comfortable"
           hide-details
@@ -109,7 +109,7 @@ defineExpose({ loadElrsDefaults })
       <v-card-subtitle class="text-wrap pb-2 text-body-2 text-medium-emphasis mb-6">
         Seven-byte <code>radio_rfsw_ctrl</code>: index <code>i</code> corresponds to <code>DIO(5+i)</code>. Each value is a
         5-bit mask — bit 0 Standby through bit 4 2.4G TX — indicating which RF states drive that pin
-        <strong>HIGH</strong>. The interrupt DIO is <code>255</code> (<code>0xFF</code>).
+        <strong>HIGH</strong>. The interrupt DIO is <code>255</code>.
       </v-card-subtitle>
       <v-card-text class="pa-0">
         <v-table density="compact" class="rfsw-table">
