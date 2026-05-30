@@ -10,7 +10,7 @@
  */
 
 /** ExpressLRS LR2021 firmware default for `radio_rfsw_ctrl` (7 bytes). */
-export const LR2021_ELRS_DEFAULT_BYTES = Object.freeze([16, 8, 2, 4, 255, 0, 0])
+export const LR2021_ELRS_DEFAULT_BYTES = Object.freeze([16, 8, 4, 2, 255, 0, 0])
 
 export const LR2021_DIO_LABELS = Object.freeze([
   'DIO5',
